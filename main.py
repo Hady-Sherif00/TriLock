@@ -1,34 +1,33 @@
-from input import Converter
-from autokey import AutokeyCipher
-from rsa import RSA
-from aes import AES
+import tkinter as tk
+from tkinter import filedialog, messagebox
+from crypto_core import encrypt_file, decrypt_file
 
-rsa = RSA()
-aes = AES()
-ak = AutokeyCipher()
+def select_file(entry):
+    path = filedialog.askopenfilename()
+    entry.delete(0, tk.END)
+    entry.insert(0, path)
 
-plain_text = Converter.get_input()
-plain_hex = Converter.txt2hex(plain_text)
+def encrypt_action():
+    input_path = entry_input.get()
+    if not input_path:
+        messagebox.showwarning("Missing Input", "Please select a file to encrypt.")
+        return
+    encrypt_file(input_path, "ciphertext.hex", "rsa_key.enc", "autokey.txt")
+    messagebox.showinfo("Done", "File encrypted successfully!")
 
-ak_key = ak.generate_random_key()
-ak_encrypt = ak.encrypt_hex(plain_hex, ak_key)
+def decrypt_action():
+    decrypt_file("ciphertext.hex", "rsa_key.enc", "autokey.txt", "decrypted.txt")
+    messagebox.showinfo("Done", "File decrypted successfully!")
 
-aes_key = aes.generate_random_key(128)
-aes_encrypt = aes.encrypt(ak_encrypt, aes_key)
+root = tk.Tk()
+root.title("Hybrid File Encryptor")
 
-aes_dec = Converter.hex2dec(aes_encrypt.hex().upper())
-rsa_encrypt = rsa.encrypt(aes_dec)
+tk.Label(root, text="Select file to encrypt:").grid(row=0, column=0, padx=10, pady=10)
+entry_input = tk.Entry(root, width=50)
+entry_input.grid(row=0, column=1, padx=10)
+tk.Button(root, text="Browse", command=lambda: select_file(entry_input)).grid(row=0, column=2)
 
-cipher_text = Converter.dec2hex(rsa_encrypt)
-print(f"Cipher text: {cipher_text}")
+tk.Button(root, text="Encrypt", width=20, command=encrypt_action).grid(row=1, column=1, pady=10)
+tk.Button(root, text="Decrypt", width=20, command=decrypt_action).grid(row=2, column=1, pady=10)
 
-
-rsa_decrypt = rsa.decrypt(rsa_encrypt)
-
-rsa_hex = Converter.dec2hex(rsa_decrypt)
-aes_decrypt = aes.decrypt(rsa_hex, aes_key)
-
-ak_decrypt = ak.decrypt_hex(aes_decrypt, ak_key)
-
-decrypted_text = Converter.hex2txt(ak_decrypt)
-print(f"Decrypted Text: {decrypted_text}")
+root.mainloop()
